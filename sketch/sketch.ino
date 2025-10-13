@@ -41,8 +41,8 @@ void greet() {
 
 // This function sends the correct pulse to the servo to set its angle
 void setServoAngle(int angle) {
-  // Map the angle (0-180) to The required pulse width in microseconds (1000-2000)
-  int pulseWidth = map(angle, 0, 180, 1000, 2000);
+  // Map the angle (0-180) to The required pulse width in microseconds (1000-1800)
+  int pulseWidth = map(angle, 0, 180, 1000, 1800);
 
   // Send the pulse
   digitalWrite(servoPin, HIGH);        // Set the signal pin high
