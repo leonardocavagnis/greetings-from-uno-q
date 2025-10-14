@@ -1,6 +1,8 @@
 name: Greetings from Arduino UNO Q
 description: This apps uses faces recognition to warmly greet a person 
 ports: []
-bricks: []
-icon: 🔴
-
+bricks:
+- arduino:video_object_detection:
+    model: face-detection
+- arduino:web_ui: {}
+icon: 👋

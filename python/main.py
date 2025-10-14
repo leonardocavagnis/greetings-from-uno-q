@@ -3,12 +3,33 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from arduino.app_utils import *
+from arduino.app_bricks.web_ui import WebUI
+from arduino.app_bricks.video_objectdetection import VideoObjectDetection
+from datetime import datetime, UTC
 import time
-import datetime
 
-while True:
-    print("Time is: ", datetime.datetime.utcnow())
-    Bridge.call("greet")
-    time.sleep(20)
+ui = WebUI()
+detection_stream = VideoObjectDetection(confidence=0.5, debounce_sec=5.0)
 
+ui.on_message("override_th", lambda sid, threshold: detection_stream.override_threshold(threshold))
 
+# Example usage: Register a callback for when a specific object is detected
+def face_detected():
+  Bridge.call("greet")
+  print("Face detected!")
+
+detection_stream.on_detect("face", face_detected)
+
+# Example usage: Register a callback for when all objects are detected
+def send_detections_to_ui(detections: dict):
+  for key, value in detections.items():
+    entry = {
+      "content": key,
+      "confidence": value,
+      "timestamp": datetime.now(UTC).isoformat()
+    }    
+    ui.send_message("detection", message=entry)
+
+detection_stream.on_detect_all(send_detections_to_ui)
+
+App.run()
