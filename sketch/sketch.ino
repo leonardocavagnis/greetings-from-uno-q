@@ -3,13 +3,34 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "Arduino_RouterBridge.h"
+#include "Servo.h"
+#include <Arduino_LED_Matrix.h>
+
 
 // Define the pin the servo's signal wire is connected to
 const int servoPin = 9;
+const int idle_position = 90;
+const int min_position = 45;
+const int max_position = 135;
+
+Arduino_LED_Matrix matrix;
+
+const uint32_t hello_face[]{
+  0x000200a8,0x0a802000,0x04403e00,0x00000000
+};
+
+const uint32_t idle_face[]{
+  0x00000038,0x0e000000,0x00007f00,0x00000000
+};
+
+
+Servo servo;
 
 void setup() {
+  matrix.begin();
   pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(servoPin, OUTPUT);
+  servo.attach(servoPin);
+  servo.write(idle_position);
 
   if (!Bridge.begin()) {
     Serial.println("cannot setup Bridge");
@@ -18,6 +39,7 @@ void setup() {
     Serial.println("cannot setup Monitor");
   }
   Bridge.provide("greet", greet);
+  matrix.loadFrame(idle_face);
 }
 
 void loop() {
@@ -26,29 +48,23 @@ void loop() {
 void greet() {
     Monitor.print("I should be greeting someone");
     digitalWrite(LED_BUILTIN, HIGH);
-  
-    // Sweep from 0 to 180 degrees 3 times
+    matrix.loadFrame(hello_face);
+
+    // Sweep  3 times
     for (int i = 0; i < 3; i++) {
-      setServoAngle(0);
-      delay(200); 
-      setServoAngle(180);
-      delay(200);
+      for (int j=idle_position; j<max_position; j++){
+        servo.write(j);
+        delay(5);
+      }
+      for (int j=max_position; j>min_position; j--){
+        servo.write(j);
+        delay(5);
+      }
+      for (int j=min_position; j<idle_position; j++){
+        servo.write(j);
+        delay(5);
+      }
     }
-
     digitalWrite(LED_BUILTIN, LOW);
-}
-
-
-// This function sends the correct pulse to the servo to set its angle
-void setServoAngle(int angle) {
-  // Map the angle (0-180) to The required pulse width in microseconds (1000-1800)
-  int pulseWidth = map(angle, 0, 180, 1000, 1800);
-
-  // Send the pulse
-  digitalWrite(servoPin, HIGH);        // Set the signal pin high
-  delayMicroseconds(pulseWidth);      // Wait for the pulse duration
-  digitalWrite(servoPin, LOW);         // Set the signal pin low
-
-  // Wait for the rest of the 20ms cycle to complete
-  delayMicroseconds(20000 - pulseWidth);
+    matrix.loadFrame(idle_face);
 }
